@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="notice">
+ <select id="list" resultType="notice.dto.NoticeDTO">
+  select idx,title,userid,content,to_char(post_date, 'yyyy-mm-dd hh24:mi:ss') post_date
+  from notice
+  order by idx
+ </select>
+ 
+ <insert id="insert" parameterType="notice.dto.NoticeDTO">
+  insert into notice (idx, userid, passwd, title, content) 
+  values ((select nvl(max(idx)+1,1) from notice), #{userid}, #{passwd}, #{title},#{content})
+ </insert>
+ 
+ <select id="view" resultType="notice.dto.NoticeDTO">
+  select * from notice
+  where idx=#{idx}
+ </select>
+ 
+ <delete id="delete" parameterType="int">
+ 	delete from notice
+ 	where idx=#{idx}
+ </delete>
+</mapper>
+

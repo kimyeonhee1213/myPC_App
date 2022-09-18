@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pboard">
+ <!-- 게시물 목록 -->
+ <select id="list" resultType="pboard.dto.PBoardDTO">
+  select * 
+from (
+    select A.*, rownum as rn
+    from (
+        select num,boardtype,userid,subject,reg_date,readcount
+         ,filename,filesize,down,ip,re_level
+         ,(select count(*) from pboard_comment 
+           where pboard_num=num) comment_count, show
+    from pboard  
+    order by ref desc, re_step asc) A
+) where rn between #{start} and #{end}
+ </select>
+ 
+ <!-- 게시물 저장 -->
+ <insert id="insert">
+  insert into pboard
+   (num,userid,boardtype,subject,passwd,ref
+   ,re_step,re_level,content,ip,filename,filesize) 
+  values
+  ( (select nvl(max(num)+1,1) from pboard)
+  ,#{userid},#{boardtype},#{subject},#{passwd}
+  ,(select nvl(max(num)+1,1) from pboard)
+  ,1,0,#{content},#{ip},#{filename},#{filesize})
+ </insert>
+ 
+ <select id="getFileName" resultType="String">
+  select filename
+	from pboard
+	where num=#{num}
+ </select>
+ 
+ <update id="plusDown">
+  update pboard set down=down+1 where num=#{num}
+ </update>
+ 
+ <!-- 게시물 상세 정보 -->
+ <select id="view" resultType="pboard.dto.PBoardDTO">
+  select * from pboard
+  where num=#{num}
+ </select>
+ 
+ <!-- 조회수 증가 처리 -->
+ <update id="plusReadCount">
+  update pboard set readcount=readcount+1 
+  where num=#{num}
+ </update>
+ 
+ <!-- 댓글 목록 -->
+ <select id="commentList" resultType="pboard.dto.PBoardCommentDTO">
+  select * from pboard_comment 
+  where pboard_num=#{num}
+  order by comment_num
+ </select>
+ 
+ <!-- 댓글 쓰기 -->
+ <insert id="commentAdd">
+  insert into pboard_comment
+  (comment_num,pboard_num,writer,content) values
+  ((select nvl(max(comment_num)+1,1) from pboard_comment)
+  , #{pboard_num}, #{writer}, #{content})
+ </insert>
+ 
+ <!-- 답글 순서 조정 -->
+ <update id="updateStep">
+  update pboard 
+  set re_step=re_step+1
+  where ref=#{ref} and re_step >= #{re_step}
+ </update>
+ 
+ <!-- 답글 쓰기 -->
+ <insert id="reply">
+  insert into pboard 
+  (num,userid,boardtype,subject,passwd,ref
+  ,re_step,re_level,content,ip,filename,filesize)
+  values
+  ( (select nvl(max(num)+1,1) from pboard)
+    ,#{userid},#{boardtype},#{subject},#{passwd}
+    , #{ref}, #{re_step}, #{re_level}
+    , #{content}, #{ip}, #{filename}, #{filesize})	
+ </insert>
+ 
+ <!-- 비번 체크 -->
+ <select id="pass_check" resultType="String">
+  select passwd from pboard
+  where num=#{num} and passwd=#{passwd}
+ </select>
+ 
+ <!-- 게시물 수정 -->
+ <update id="update">
+  update pboard set userid=#{userid},boardtype=#{boardtype}, subject=#{subject}, content=#{content}, 
+filename=#{filename}, filesize=#{filesize}, down=#{down}, ip=#{ip} where num=#{num}
+ </update>
+ 
+ <!-- 삭제(진짜 삭제x) -->
+ <update id="delete">
+  update pboard set show='n' 
+  where num=#{num}
+ </update>
+ 
+ <!-- 검색, 마이바티스에도 choose문이 있다. -->
+ <select id="searchList" resultType="pboard.dto.PBoardDTO">
+  select num,userid,boardtype,subject,reg_date,readcount
+   ,filename,filesize,down,ip
+   ,(select count(*) from pboard_comment 
+  where pboard_num=num) comment_count, show
+  from pboard
+  <choose>
+   <when test="search_option != 'all'">
+    where ${search_option} like #{keyword} and show='y'
+   </when>
+   <otherwise>
+    where ( userid like #{keyword} 
+    or subject like #{keyword} 
+    or content like #{keyword}
+    or boardtype like #{keyword})
+      and show='y'
+   </otherwise>
+  </choose>
+  order by ref desc, re_step
+ </select>
+ 
+ <!-- 게시물 갯수 계산 -->
+ <select id="count" resultType="int">
+  select count(*) from pboard
+ </select>
+ 
+ <delete id="adminDelete" parameterType="int">
+ 	delete from pboard
+ 	where num=#{num}
+ </delete>
+
+</mapper> 

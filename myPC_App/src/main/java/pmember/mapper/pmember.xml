@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pmember"> 
+   <select id="login" resultType="String">
+      select name
+      from pmember
+      where userid=#{userid} and passwd=#{passwd}
+    </select>
+    
+    <select id="memberList" resultType="pmember.dto.PMemberDTO">
+    	select userid,name,phone,regdate,userole
+    	from pmember
+    	order by userid asc
+    </select>
+    
+    <select id="memberDetail" resultType="pmember.dto.PMemberDTO">
+	  select name,userid,passwd,phone,userole
+	  from pmember
+	  where userid=#{userid}
+	 </select>
+	 
+	 <select id="selfDetail" resultType="pmember.dto.PMemberDTO">
+	  select name,userid,passwd,phone,zipcode, address, address2, email
+	  from pmember
+	  where userid=#{userid}
+	 </select>
+	 
+	 <update id="memberUpdate" parameterType="pmember.dto.PMemberDTO">
+		update pmember
+		set name=#{name},passwd=#{passwd}, phone=#{phone}
+		where userid=#{userid}
+	 </update>
+	 
+	<update id="selfUpdate" parameterType="pmember.dto.PMemberDTO">
+		update pmember
+		set name=#{name},passwd=#{passwd}, phone=#{phone}, zipcode=#{zipcode},
+		address = #{address}, address2 = #{address2}, email=#{email}
+		where userid=#{userid}
+	 </update>
+	 
+	 
+	 <delete id="memberDelete" parameterType="String">
+	 	delete from pmember
+	 	where userid=#{userid}
+	 </delete>
+	 
+	 <delete id="selfDelete" parameterType="String">
+	 	delete from pmember
+	 	where userid=#{userid}
+	 </delete>
+	 
+	 <insert id="insert">
+	  insert into pmember (userid, passwd, name, email, phone, zipcode, address, address2) values
+	  (#{userid},#{passwd}, #{name}, #{email}, #{phone}, #{zipcode}, #{address}, #{address2}) 
+	 </insert>
+	 
+	 <select id="idCheck" parameterType="String" resultType="String">
+	 	select userid from pmember where userid=#{param}
+	 </select>
+</mapper>
+
